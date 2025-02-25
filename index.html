@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fingerprintjs2/2.1.4/fingerprint2.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[readonly] {
+            background: #f9f9f9;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #responseMessage {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Record Attendance</h2>
+        <form id="attendanceForm">
+            <label>Lecture ID:</label>
+            <input type="text" id="lecture" required>
+
+            <label>Student Name:</label>
+            <input type="text" id="studentName" required>
+
+            <label>Department:</label>
+            <input type="text" id="department" required>
+
+            <label>Group:</label>
+            <input type="text" id="group" required >
+
+            <label>GPS Location:</label>
+            <input type="text" id="gpsLocation" readonly disabled>
+
+            <label>Device Fingerprint:</label>
+            <input type="text" id="deviceFingerprint" readonly disabled>
+
+            <button type="submit">Submit</button>
+        </form>
+        <p id="responseMessage"></p>
+    </div>
+
+    <script>
+        function getLocation() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById("gpsLocation").value = position.coords.latitude + "," + position.coords.longitude;
+                }, function(error) {
+                    console.error("Geolocation error:", error);
+                });
+            }
+        }
+
+        function getDeviceFingerprint() {
+            Fingerprint2.get(function(components) {
+                let fingerprint = Fingerprint2.x64hash128(components.map(pair => pair.value).join(), 31);
+                document.getElementById("deviceFingerprint").value = fingerprint;
+            });
+        }
+
+        window.onload = function() {
+            getLocation();
+            getDeviceFingerprint();
+        };
+
+        document.getElementById('attendanceForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const data = {
+                lecture: document.getElementById('lecture').value,
+                studentName: document.getElementById('studentName').value,
+                department: document.getElementById('department').value,
+                group: document.getElementById('group').value,
+                gpsLocation: document.getElementById('gpsLocation').value,
+                deviceFingerprint: document.getElementById('deviceFingerprint').value
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/api/students/attendance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                document.getElementById('responseMessage').innerText = result.message;
+            } catch (error) {
+                document.getElementById('responseMessage').innerText = 'Error connecting to the server';
+                console.error('Request failed:', error);
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+ 
