@@ -54,16 +54,24 @@ exports.loginInstructor = async (req, res) => {
 // Create a new lecture with QR Code generation
 exports.createLecture = async (req, res) => {
     try {
-        const { course, section, date } = req.body;
-        const instructorId = req.user.id;
+        // Extract required fields from the request body
+        const { course, section } = req.body; // No need to include 'date' since it's generated automatically
+        const instructorId = req.user.id; // Get the instructor's ID from the authenticated user
 
-        const lecture = new Lecture({ instructor: instructorId, course, section, date });
+        // Create a new lecture instance (date will be set automatically by the model)
+        const lecture = new Lecture({ instructor: instructorId, course, section });
+
+        // Generate a QR code using the lecture ID
         const qrCode = await qr.toDataURL(`${lecture._id}`);
-        lecture.qrCode = qrCode;
+        lecture.qrCode = qrCode; // Assign the QR code to the lecture
+
+        // Save the lecture to the database
         await lecture.save();
 
+        // Send a success response
         res.status(201).json({ message: 'Lecture created successfully', lecture });
     } catch (error) {
+        // Handle errors and send an error response
         res.status(500).json({ message: 'Error creating lecture', error });
     }
 };
