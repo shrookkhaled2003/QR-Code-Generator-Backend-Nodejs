@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Attendance = require('../models/attendance.model.js');
+const Lecture = require('../models/lecture.model.js');
 
 const recordAttendance = async (req, res) => {
   try {
@@ -22,8 +23,8 @@ const recordAttendance = async (req, res) => {
           return res.status(400).json({ message: 'QR Code expired. Attendance not allowed.' });
       }
 
-      // Check if the student has already recorded attendance using both name and device fingerprint
-      const existingAttendance = await Attendance.findOne({ lecture, studentName, deviceFingerprint });
+      // Check if the student has already recorded attendance using device fingerprint
+      const existingAttendance = await Attendance.findOne({ lecture, deviceFingerprint });
       if (existingAttendance) {
           return res.status(400).json({ message: 'Attendance already recorded for this student from this device' });
       }
