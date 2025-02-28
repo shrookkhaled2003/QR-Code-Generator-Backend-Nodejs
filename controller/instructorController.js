@@ -63,7 +63,7 @@ exports.createLecture = async (req, res) => {
 
         // Create a new lecture record with an automatic expiration time
         const lecture = new Lecture({ instructor: instructorId, course, section, expiresAt });
-
+        
         // Generate the frontend URL with lecture ID and expiration time as query parameters
         const frontendURL = `https://your-frontend.com/attendance?lectureId=${lecture._id}&expiresAt=${expiresAt.toISOString()}`;
 
@@ -79,6 +79,7 @@ exports.createLecture = async (req, res) => {
         res.status(500).json({ message: 'Error creating lecture', error });
     }
 };
+
 
 // Get attendance records for the instructor
 exports.getAttendance = async (req, res) => {
