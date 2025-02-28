@@ -54,24 +54,28 @@ exports.loginInstructor = async (req, res) => {
 // Create a new lecture with QR Code generation
 exports.createLecture = async (req, res) => {
     try {
-        // Extract required fields from the request body
-        const { course, section } = req.body; // No need to include 'date' since it's generated automatically
-        const instructorId = req.user.id; // Get the instructor's ID from the authenticated user
+        const { course, section } = req.body;
+        const instructorId = req.user.id;
 
-        // Create a new lecture instance (date will be set automatically by the model)
-        const lecture = new Lecture({ instructor: instructorId, course, section });
+        // Set the expiration time to 40 minutes from creation
+        const expiresAt = new Date();
+        expiresAt.setMinutes(expiresAt.getMinutes() + 40);
 
-        // Generate a QR code using the lecture ID
-        const qrCode = await qr.toDataURL(`${lecture._id}`);
-        lecture.qrCode = qrCode; // Assign the QR code to the lecture
+        // Create a new lecture record with an automatic expiration time
+        const lecture = new Lecture({ instructor: instructorId, course, section, expiresAt });
+
+        // Generate the frontend URL with lecture ID and expiration time as query parameters
+        const frontendURL = `https://your-frontend.com/attendance?lectureId=${lecture._id}&expiresAt=${expiresAt.toISOString()}`;
+
+        // Generate a QR Code containing the frontend URL
+        const qrCode = await qr.toDataURL(frontendURL);
+        lecture.qrCode = qrCode;
 
         // Save the lecture to the database
         await lecture.save();
 
-        // Send a success response
         res.status(201).json({ message: 'Lecture created successfully', lecture });
     } catch (error) {
-        // Handle errors and send an error response
         res.status(500).json({ message: 'Error creating lecture', error });
     }
 };
