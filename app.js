@@ -16,6 +16,9 @@ connectDB();
 // Define routes
 app.use('/api/instructors', instructorRoutes);
 app.use('/api/students', studentRoutes);
+ app.get('/', (req, res) => {
+    res.send('Hello, World!');  // Replace with your own welcome message
+ })
 
 // Start server
 const PORT = process.env.PORT || 5000;
