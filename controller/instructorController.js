@@ -63,7 +63,7 @@ exports.createLecture = async (req, res) => {
 
         // Create a new lecture record with an automatic expiration time
         const lecture = new Lecture({ instructor: instructorId, course, section, expiresAt });
-        
+
         // Generate the frontend URL with lecture ID and expiration time as query parameters
         const frontendURL = `https://your-frontend.com/attendance?lectureId=${lecture._id}&expiresAt=${expiresAt.toISOString()}`;
 
@@ -104,10 +104,14 @@ exports.getAttendance = async (req, res) => {
                 };
             }
             groupedAttendance[lectureId].students.push({
+                _id: record._id,
                 studentName: record.studentName,
-                studentEmail: record.studentEmail,
+                department: record.department,
+                group: record.group,
                 gpsLocation: record.gpsLocation,
-                timestamp: record.timestamp
+                deviceFingerprint: record.deviceFingerprint,
+                timestamp: record.timestamp,
+                __v: record.__v
             });
         });
 
