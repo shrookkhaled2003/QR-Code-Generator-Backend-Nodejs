@@ -65,7 +65,7 @@ exports.createLecture = async (req, res) => {
         const lecture = new Lecture({ instructor: instructorId, course, section, expiresAt });
 
         // Generate the frontend URL with lecture ID and expiration time as query parameters
-        const frontendURL = `http://localhost:5173/qrcode/${lecture._id}${expiresAt.toISOString()}`;
+        const frontendURL = `http://localhost:5173/qrcode/${lecture._id}&${expiresAt.toISOString()}`;
 
         // Generate a QR Code containing the frontend URL
         const qrCode = await qr.toDataURL(frontendURL);
