@@ -5,7 +5,10 @@ const attendanceSchema = new mongoose.Schema({
   studentName: { type: String, required: true },
   department: { type: String, required: true },
   group: { type: String },
-  gpsLocation: { type: String },
+  gpsLocation: {
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true }
+  },
   deviceFingerprint: { type: String, required: true },
   timestamp: { type: Date, default: Date.now }
 });

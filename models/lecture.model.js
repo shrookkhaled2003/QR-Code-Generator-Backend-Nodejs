@@ -5,7 +5,11 @@ const lectureSchema = new mongoose.Schema({
   course: { type: String, required: true },
   section: { type: String, required: true },
   date: { type: Date, default: Date.now },
-  qrCode: { type: String } 
+  qrCode: { type: String },
+  gpsLocation: {
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true }
+  } 
 });
 
 module.exports = mongoose.model('Lecture', lectureSchema);

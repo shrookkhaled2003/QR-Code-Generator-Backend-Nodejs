@@ -54,18 +54,29 @@ exports.loginInstructor = async (req, res) => {
 // Create a new lecture with QR Code generation
 exports.createLecture = async (req, res) => {
     try {
-        const { course, section } = req.body;
+        const { course, section, gpsLocation } = req.body;
         const instructorId = req.user.id;
 
-        // Set the expiration time to 40 minutes from creation
-        const expiresAt = new Date();
-        expiresAt.setMinutes(expiresAt.getMinutes() + 40);
+        // Validate GPS location data
+        if (!gpsLocation || !gpsLocation.latitude || !gpsLocation.longitude) {
+            return res.status(400).json({ message: 'GPS location (latitude and longitude) is required' });
+        }
 
-        // Create a new lecture record with an automatic expiration time
-        const lecture = new Lecture({ instructor: instructorId, course, section, expiresAt });
+        // Set the expiration time to 40 minutes from creation
+        const date = new Date();
+        date.setMinutes(date.getMinutes() + 40);
+
+        // Create a new lecture record with an automatic expiration time and location data
+        const lecture = new Lecture({ 
+            instructor: instructorId, 
+            course, 
+            section, 
+            date, 
+            gpsLocation // Store GPS location in the database
+        });
 
         // Generate the frontend URL with lecture ID and expiration time as query parameters
-        const frontendURL = `http://localhost:5173/qrcode/${lecture._id}&${expiresAt.toISOString()}`;
+        const frontendURL = `http://localhost:5173/qrcode/${lecture._id}&${date.toISOString()}`;
 
         // Generate a QR Code containing the frontend URL
         const qrCode = await qr.toDataURL(frontendURL);
@@ -79,6 +90,7 @@ exports.createLecture = async (req, res) => {
         res.status(500).json({ message: 'Error creating lecture', error });
     }
 };
+
 
 
 // Get attendance records for the instructor
@@ -119,5 +131,18 @@ exports.getAttendance = async (req, res) => {
     } catch (error) {
         console.error("Error fetching attendance records:", error);
         res.status(500).json({ message: 'Error fetching attendance records', error });
+    }
+};
+
+// Get all lectures for the instructor
+exports.getAllLectures = async (req, res) => {
+    try{
+        const instructorId = req.user.id;
+        const lectures = await Lecture.find({ instructor: instructorId }).select('course section date qrCode');
+        res.json(lectures);
+    }
+    catch(error){
+        console.error("Error fetching lectures:", error);
+        res.status(500).json({ message: 'Error fetching lectures', error });
     }
 };

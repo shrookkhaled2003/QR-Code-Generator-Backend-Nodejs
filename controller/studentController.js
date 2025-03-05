@@ -19,7 +19,7 @@ const recordAttendance = async (req, res) => {
 
       // Check if the QR Code has expired (40 minutes from creation)
       const now = new Date();
-      if (now > lectureData.expiresAt) {
+      if (now > lectureData.date) {
           return res.status(400).json({ message: 'QR Code expired. Attendance not allowed.' });
       }
 
