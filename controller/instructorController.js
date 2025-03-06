@@ -76,7 +76,7 @@ exports.createLecture = async (req, res) => {
         });
 
         // Generate the frontend URL with lecture ID and expiration time as query parameters
-        const frontendURL = `http://localhost:5173/qrcode/${lecture._id}&${date.toISOString()}`;
+        const frontendURL = `https://qrattendancefy.netlify.app/qrcode/${lecture._id}&${date.toISOString()}`;
 
         // Generate a QR Code containing the frontend URL
         const qrCode = await qr.toDataURL(frontendURL);
