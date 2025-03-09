@@ -4,6 +4,7 @@ const Attendance = require('../models/attendance.model.js');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const qr = require('qrcode');
+const ExcelJs = require('exceljs');
 
 // Register a new instructor
 exports.registerInstructor = async (req, res) => {
@@ -144,5 +145,142 @@ exports.getAllLectures = async (req, res) => {
     catch(error){
         console.error("Error fetching lectures:", error);
         res.status(500).json({ message: 'Error fetching lectures', error });
+    }
+};
+
+// Export attendance records as an Excel file
+/*  exports.exportToExcel = async (req, res) => {
+    try {
+        const instructorId = req.user.id;
+        const lectures = await Lecture.find({ instructor: instructorId }).lean();
+        const lectureIds = lectures.map(lecture => lecture._id);
+
+        const attendanceRecords = await Attendance.find({ lecture: { $in: lectureIds } })
+            .populate('lecture', 'course section date')
+            .lean();
+
+        const workbook = new ExcelJs.Workbook();
+        const worksheet = workbook.addWorksheet('Attendance Records');
+
+        worksheet.columns = [
+            { header: 'Course', key: 'course', width: 20 },
+            { header: 'Section', key: 'section', width: 15 },
+            { header: 'Lecture Date', key: 'date', width: 20 },
+            { header: 'Student Name', key: 'studentName', width: 20 },
+            { header: 'Department', key: 'department', width: 15 },
+            { header: 'Group', key: 'group', width: 15 },
+            { header: 'GPS Location', key: 'gps', width: 30 },
+            { header: 'Device Fingerprint', key: 'device_fingerprint', width: 25 },
+            { header: 'Timestamp', key: 'time', width: 20 }
+        ];
+
+        let currentCourse = ''; // لتحديد متى يتغير الكورس
+        attendanceRecords.forEach(record => {
+            const lecture = record.lecture;
+
+            // إضافة صف جديد عند تغير الكورس
+            if (lecture.course !== currentCourse) {
+                currentCourse = lecture.course;
+                worksheet.addRow({ course: currentCourse }).font = { bold: true }; // عنوان الكورس
+            }
+
+            // إضافة بيانات الطالب
+            worksheet.addRow({
+                course: '', // فارغ عشان يكون تحته
+                section: lecture.section,
+                date: new Date(lecture.date).toLocaleString(),
+                studentName: record.studentName,
+                department: record.department,
+                group: record.group,
+                gps: record.gpsLocation ? `Lat: ${record.gpsLocation.latitude}, Lng: ${record.gpsLocation.longitude}` : 'N/A',
+                device_fingerprint: record.deviceFingerprint || 'N/A',
+                time: new Date(record.timestamp).toLocaleString()
+            });
+        });
+
+        // حفظ الملف وإرساله للفرونت
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=attendance.xlsx');
+
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.error("Error exporting attendance:", error);
+        res.status(500).json({ message: 'Error exporting attendance', error });
+    }
+}; */ 
+
+exports.exportToExcel = async (req, res) => {
+    try {
+        const instructorId = req.user.id;
+        const lectures = await Lecture.find({ instructor: instructorId }).lean();
+        const lectureIds = lectures.map(lecture => lecture._id);
+
+        const attendanceRecords = await Attendance.find({ lecture: { $in: lectureIds } })
+            .populate('lecture', 'course section date')
+            .lean();
+
+        const workbook = new ExcelJs.Workbook();
+        const worksheet = workbook.addWorksheet('Attendance Records');
+
+        worksheet.columns = [
+            { header: 'Course', key: 'course', width: 20 },
+            { header: 'Section', key: 'section', width: 15 },
+            { header: 'Lecture Date', key: 'date', width: 20 },
+            { header: 'Student Name', key: 'studentName', width: 20 },
+            { header: 'Department', key: 'department', width: 15 },
+            { header: 'Group', key: 'group', width: 15 },
+            { header: 'GPS Location', key: 'gps', width: 30 },
+            { header: 'Device Fingerprint', key: 'device_fingerprint', width: 25 },
+            { header: 'Timestamp', key: 'time', width: 20 }
+        ];
+
+        let rowIndex = 2; // نبدأ بعد العناوين
+
+        let currentCourse = null;
+        let startRow = null;
+
+        attendanceRecords.forEach((record, index) => {
+            const lecture = record.lecture;
+
+            if (lecture.course !== currentCourse) {
+                // عند تغير الكورس، احفظ بداية الصف الجديد
+                if (currentCourse !== null && startRow !== null) {
+                    worksheet.mergeCells(`A${startRow}:A${rowIndex - 1}`);
+                }
+                currentCourse = lecture.course;
+                startRow = rowIndex;
+            }
+
+            // إضافة بيانات الطالب
+            worksheet.addRow({
+                course: lecture.course, // سيُدمج لاحقًا
+                section: lecture.section,
+                date: new Date(lecture.date).toLocaleString(),
+                studentName: record.studentName,
+                department: record.department,
+                group: record.group,
+                gps: record.gpsLocation ? `Lat: ${record.gpsLocation.latitude}, Lng: ${record.gpsLocation.longitude}` : 'N/A',
+                device_fingerprint: record.deviceFingerprint || 'N/A',
+                time: new Date(record.timestamp).toLocaleString()
+            });
+
+            rowIndex++;
+        });
+
+        // دمج آخر كورس بعد انتهاء التكرار
+        if (currentCourse !== null && startRow !== null) {
+            worksheet.mergeCells(`A${startRow}:A${rowIndex - 1}`);
+        }
+
+        // حفظ الملف وإرساله للفرونت
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=attendance.xlsx');
+
+        await workbook.xlsx.write(res);
+        res.end();
+    } catch (error) {
+        console.error("Error exporting attendance:", error);
+        res.status(500).json({ message: 'Error exporting attendance', error });
     }
 };
