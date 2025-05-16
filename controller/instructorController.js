@@ -95,7 +95,7 @@ exports.createLecture = async (req, res) => {
 
 
 
-// Get attendance records for the instructor
+//. Get attendance records for the instructor
 exports.getAttendance = async (req, res) => {
     try {
         const instructorId = req.user.id;
@@ -271,7 +271,7 @@ exports.exportToExcel = async (req, res) => {
 exports.exportLectureToExcel = async (req, res) => {
     try {
         const instructorId = req.user.id;
-        const lectureId = req.params.lectureId;
+        const lectureId = req.params.lectureID;
 
         // Verify that the lecture belongs to the authenticated instructor
         const lecture = await Lecture.findOne({ _id: lectureId, instructor: instructorId }).lean();
